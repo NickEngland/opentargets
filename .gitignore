@@ -1,0 +1,7 @@
+venv/
+download/diseases.json
+download/eva.json
+download/targets.json
+.idea/*
+__pycache__/
+output.json
