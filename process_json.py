@@ -14,11 +14,11 @@ default_eva_path = 'download/eva.json'
 TargetDisease = namedtuple("TargetDisease", "target disease")
 
 
-def json_to_dict(path: str):
+def extract_value_from_json(path: str, column: str):
     data = {}
     for line in open(path, 'r'):
         item = json.loads(line)
-        data[item['id']] = item
+        data[item['id']] = item[column]
     return data
 
 
@@ -62,8 +62,8 @@ def find_target_target_relationships(target_disease_set, disease_target_set, tar
 class EvidenceParser:
     def __init__(self, eva_path=default_eva_path, targets_path=default_targets_path,
                  diseases_path=default_diseases_path):
-        self.targets = json_to_dict(targets_path)  # approvedSymbol
-        self.diseases = json_to_dict(diseases_path)  # name
+        self.targets = extract_value_from_json(targets_path, "approvedSymbol")  # approvedSymbol
+        self.diseases = extract_value_from_json(diseases_path, "name")  # name
         self.eva = process_evidence(eva_path)
         self.target_disease_set = defaultdict(set)
         self.disease_target_set = defaultdict(set)
@@ -84,8 +84,8 @@ class EvidenceParser:
 
     def join_columns(self, results: List[Dict]):
         for item in results:
-            item['name'] = self.diseases[item['diseaseId']]['name']
-            item['approvedSymbol'] = self.targets[item['targetId']]['approvedSymbol']
+            item['name'] = self.diseases[item['diseaseId']]
+            item['approvedSymbol'] = self.targets[item['targetId']]
         return results
 
     def create_target_disease_sets(self):
@@ -106,7 +106,7 @@ def main():
     with open(args.output, 'w') as output:
         json.dump(results, output)
     results = evidence_parser.parallel_target_target_calc()
-    print(results)
+    print(results, "Target-target pairs which share at least 2 diseases")
 
 
 if __name__ == '__main__':

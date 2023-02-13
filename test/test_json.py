@@ -1,13 +1,13 @@
-from process_json import json_to_dict, process_evidence, TargetDisease, EvidenceParser, calculate_data, \
+from process_json import extract_value_from_json, process_evidence, TargetDisease, EvidenceParser, calculate_data, \
     find_target_target_relationships
 
 
 # We only want the disease name and the id fields from this file
 def test_load_diseases():
-    data = json_to_dict('test/diseases.json')
+    data = extract_value_from_json('test/diseases.json', 'name')
     assert len(data) == 2
     print(data)
-    assert data['Orphanet_300576']['name'] == 'Oligodontia - cancer predisposition syndrome'
+    assert data['Orphanet_300576']== 'Oligodontia - cancer predisposition syndrome'
 
 
 def test_process_evidence():
