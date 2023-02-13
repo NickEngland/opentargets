@@ -16,7 +16,7 @@ TargetDisease = namedtuple("TargetDisease", "target disease")
 
 def extract_value_from_json(path: str, column: str):
     data = {}
-    for line in open(path, 'r'):
+    for line in open(path, 'r', encoding='utf8'):
         item = json.loads(line)
         data[item['id']] = item[column]
     return data
@@ -24,7 +24,7 @@ def extract_value_from_json(path: str, column: str):
 
 def process_evidence(path=default_eva_path) -> Dict[TargetDisease, List]:
     target_disease_dict = defaultdict(list)
-    for line in open(path, 'r'):
+    for line in open(path, 'r', encoding='utf8'):
         item = json.loads(line)
         target_disease = TargetDisease(item['targetId'], item['diseaseId'])
         score = item['score']
@@ -103,7 +103,7 @@ def main():
     results = evidence_parser.parallel_calculate()
     evidence_parser.join_columns(results)
     results.sort(key=lambda item: item['median'])
-    with open(args.output, 'w') as output:
+    with open(args.output, 'w', encoding='utf8') as output:
         json.dump(results, output)
     results = evidence_parser.parallel_target_target_calc()
     print(results, "Target-target pairs which share at least 2 diseases")
