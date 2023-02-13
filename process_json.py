@@ -1,6 +1,7 @@
 import json
 import argparse
 import multiprocessing
+import itertools
 from statistics import median
 from collections import defaultdict, namedtuple
 from typing import List, Dict
@@ -21,7 +22,7 @@ def json_to_dict(path: str):
     return data
 
 
-def process_evidence(path=default_eva_path) -> dict:
+def process_evidence(path=default_eva_path) -> Dict[TargetDisease, List]:
     target_disease_dict = defaultdict(list)
     for line in open(path, 'r'):
         item = json.loads(line)
@@ -40,22 +41,57 @@ def calculate_data(target_data, scores) -> dict:
     return result
 
 
+def find_target_target_relationships(target_disease_set, disease_target_set, target) -> int:
+    """
+    This calculates the number of other targets which *target* shares at least 2 diseases with
+    :param target_disease_set:
+    :param disease_target_set:
+    :param target:
+    :return: The number of other targets which share at least 2 diseases with *target*
+    """
+    targets = defaultdict(int)
+    diseases = target_disease_set.get(target)
+    for disease in diseases:
+        for target2 in disease_target_set.get(disease):
+            targets[target2] += 1
+    # remove self
+    del targets[target]
+    return len([target for target in targets if targets[target] >= 2])
+
+
 class EvidenceParser:
-    def __init__(self, eva_path=default_eva_path, targets_path=default_targets_path, diseases_path=default_diseases_path):
+    def __init__(self, eva_path=default_eva_path, targets_path=default_targets_path,
+                 diseases_path=default_diseases_path):
         self.targets = json_to_dict(targets_path)  # approvedSymbol
         self.diseases = json_to_dict(diseases_path)  # name
         self.eva = process_evidence(eva_path)
+        self.target_disease_set = defaultdict(set)
+        self.disease_target_set = defaultdict(set)
+        self.create_target_disease_sets()
 
     def parallel_calculate(self) -> List[Dict]:
         with multiprocessing.Pool() as pool:
             results = pool.starmap(calculate_data, self.eva.items())
             return results
 
+    def parallel_target_target_calc(self) -> int:
+        targets = zip(itertools.repeat(self.target_disease_set),
+                      itertools.repeat(self.disease_target_set),
+                      self.target_disease_set.keys())
+        with multiprocessing.Pool() as pool:
+            results = pool.starmap(find_target_target_relationships, targets)
+            return sum(results)//2
+
     def join_columns(self, results: List[Dict]):
         for item in results:
             item['name'] = self.diseases[item['diseaseId']]['name']
             item['approvedSymbol'] = self.targets[item['targetId']]['approvedSymbol']
         return results
+
+    def create_target_disease_sets(self):
+        for key in self.eva.keys():
+            self.target_disease_set[key.target].add(key.disease)
+            self.disease_target_set[key.disease].add(key.target)
 
 
 def main():
@@ -69,6 +105,8 @@ def main():
     results.sort(key=lambda item: item['median'])
     with open(args.output, 'w') as output:
         json.dump(results, output)
+    results = evidence_parser.parallel_target_target_calc()
+    print(results)
 
 
 if __name__ == '__main__':
