@@ -3,14 +3,17 @@ from process_json import json_to_dict, diseases_path, process_evidence, TargetDi
 
 # We only want the disease name and the id fields from this file
 def test_load_diseases():
-    data = json_to_dict(diseases_path)
-    assert len(data) == 18706
-    assert data['DOID_7551']['name'] == 'gonorrhea'
+    data = json_to_dict('test/diseases.json')
+    assert len(data) == 1
+    print(data)
+    assert data['Orphanet_300576']['name'] == 'Oligodontia - cancer predisposition syndrome'
 
 
 def test_process_evidence():
-    evidence_list = process_evidence()
-    assert len(evidence_list) == 25132
+    evidence_list = process_evidence(path='test/eva.json')
+    print(evidence_list)
+    assert len(evidence_list) == 1
+    assert evidence_list[TargetDisease("ENSG00000168646", "Orphanet_300576")] == [0.02]
 
 
 def test_calculate_data():
@@ -20,13 +23,17 @@ def test_calculate_data():
 
 
 def test_parallel_calculate():
-    parser = EvidenceParser()
+    parser = EvidenceParser(eva_path='test/eva.json', diseases_path='test/diseases.json',
+                            targets_path='test/targets.json')
     results = parser.parallel_calculate()
-    assert len(results) == 25132
+    print(results)
+    assert len(results) == 1
+    assert results[0]['median'] == 0.02
 
 
 def test_join_columns():
-    parser = EvidenceParser(eva_path='test/eva.json', diseases_path='test/diseases.json', targets_path='test/targets.json')
+    parser = EvidenceParser(eva_path='test/eva.json', diseases_path='test/diseases.json',
+                            targets_path='test/targets.json')
     results = parser.parallel_calculate()
     assert len(results) == 1
     results = parser.join_columns(results)
