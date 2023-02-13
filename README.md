@@ -22,5 +22,13 @@ This will create output.json containing a list of the target diseases pairs sort
 
 The number of pairs of targets which share at least 2 diseases will be written out to the console. An example output has been saved in output2.txt
 
+# Tests
+
+```
+pytest .
+```
+
+Will run some tests to ensure everything is working.
+
 ## Author
 This code was written by Nick England
