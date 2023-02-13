@@ -1,4 +1,4 @@
-from process_json import json_to_dict, diseases_path, process_evidence, TargetDisease, EvidenceParser, calculate_data
+from process_json import json_to_dict, process_evidence, TargetDisease, EvidenceParser, calculate_data
 
 
 # We only want the disease name and the id fields from this file

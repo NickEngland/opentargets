@@ -6,9 +6,9 @@ from collections import defaultdict, namedtuple
 from typing import List, Dict
 
 # Json is missing a wrapping list making it unable to parse the whole file at once
-diseases_path = 'download/diseases.json'
-targets_path = 'download/targets.json'
-eva_path = 'download/eva.json'
+default_diseases_path = 'download/diseases.json'
+default_targets_path = 'download/targets.json'
+default_eva_path = 'download/eva.json'
 
 TargetDisease = namedtuple("TargetDisease", "target disease")
 
@@ -21,7 +21,7 @@ def json_to_dict(path: str):
     return data
 
 
-def process_evidence(path=eva_path) -> dict:
+def process_evidence(path=default_eva_path) -> dict:
     target_disease_dict = defaultdict(list)
     for line in open(path, 'r'):
         item = json.loads(line)
@@ -41,7 +41,7 @@ def calculate_data(target_data, scores) -> dict:
 
 
 class EvidenceParser:
-    def __init__(self, eva_path=eva_path, targets_path=targets_path, diseases_path=diseases_path):
+    def __init__(self, eva_path=default_eva_path, targets_path=default_targets_path, diseases_path=default_diseases_path):
         self.targets = json_to_dict(targets_path)  # approvedSymbol
         self.diseases = json_to_dict(diseases_path)  # name
         self.eva = process_evidence(eva_path)
@@ -60,7 +60,7 @@ class EvidenceParser:
 
 def main():
     parser = argparse.ArgumentParser(description='Process JSON data')
-    parser.add_argument("--evidence", default=eva_path)
+    parser.add_argument("--evidence", default=default_eva_path)
     parser.add_argument("--output", default="output.json")
     args = parser.parse_args()
     evidence_parser = EvidenceParser(args.evidence)
