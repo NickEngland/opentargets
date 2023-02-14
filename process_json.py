@@ -1,6 +1,8 @@
-import json
+import ujson
 import argparse
 import multiprocessing
+from threading import Thread
+from queue import Queue
 import itertools
 from statistics import median
 from collections import defaultdict, namedtuple
@@ -17,7 +19,7 @@ TargetDisease = namedtuple("TargetDisease", "target disease")
 def extract_value_from_json(path: str, column: str):
     data = {}
     for line in open(path, 'r', encoding='utf8'):
-        item = json.loads(line)
+        item = ujson.loads(line)
         data[item['id']] = item[column]
     return data
 
@@ -25,7 +27,7 @@ def extract_value_from_json(path: str, column: str):
 def process_evidence(path=default_eva_path) -> Dict[TargetDisease, List]:
     target_disease_dict = defaultdict(list)
     for line in open(path, 'r', encoding='utf8'):
-        item = json.loads(line)
+        item = ujson.loads(line)
         target_disease = TargetDisease(item['targetId'], item['diseaseId'])
         score = item['score']
         target_disease_dict[target_disease].append(score)
@@ -99,12 +101,17 @@ def main():
     parser.add_argument("--evidence", default=default_eva_path)
     parser.add_argument("--output", default="output.json")
     args = parser.parse_args()
+    print("Loading JSON for analysis from", args.evidence)
     evidence_parser = EvidenceParser(args.evidence)
+    print("Running calculations")
     results = evidence_parser.parallel_calculate()
+    print("Joining columns")
     evidence_parser.join_columns(results)
     results.sort(key=lambda item: item['median'])
+    print("Writing output to", args.output)
     with open(args.output, 'w', encoding='utf8') as output:
-        json.dump(results, output)
+        ujson.dump(results, output)
+    print("Calculating target-disease-target pairs")
     results = evidence_parser.parallel_target_target_calc()
     print(results, "Target-target pairs which share at least 2 diseases")
 
